@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Subject {
+  id        String   @id @default(cuid())
+  title     String
+  topics    Int      @default(0)
+  tags      String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Flashcard {
+  id         String   @id @default(cuid())
+  front      String
+  back       String
+  difficulty String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Goal {
+  id        String   @id @default(cuid())
+  label     String
+  detail    String
+  progress  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CalendarEvent {
+  id        String   @id @default(cuid())
+  title     String
+  date      String
+  time      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PhilosophyTheme {
+  id          String   @id @default(cuid())
+  theme       String
+  focus       String
+  insight     String
+  philosophers String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Reflection {
+  id           String   @id @default(cuid())
+  title        String
+  content      String
+  philosophers String[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model PomodoroSession {
+  id          String   @id @default(cuid())
+  label       String
+  minutes     Int
+  completedAt DateTime
+  createdAt   DateTime @default(now())
+}
