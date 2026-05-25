@@ -1,5 +1,9 @@
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+const RAW_API_BASE = process.env.NEXT_PUBLIC_API_URL?.trim();
+const FALLBACK_API_BASE =
+  process.env.NODE_ENV === "production"
+    ? "https://estudos-1vyp.onrender.com"
+    : "http://localhost:4000";
+const API_BASE = (RAW_API_BASE || FALLBACK_API_BASE).replace(/\/+$/, "");
 
 export async function apiFetch<T>(path: string, options?: RequestInit) {
   const response = await fetch(`${API_BASE}${path}`, {
