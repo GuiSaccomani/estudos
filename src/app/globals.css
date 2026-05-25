@@ -78,6 +78,30 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* Make long words and media responsive to avoid horizontal overflow */
+* {
+  box-sizing: border-box;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.break-words,
+body,
+p,
+li,
+h1,
+h2,
+h3 {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
 h1,
 h2,
 h3 {
