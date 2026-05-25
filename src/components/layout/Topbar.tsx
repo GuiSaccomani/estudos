@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Bell, Moon, Search, SunMedium } from "lucide-react";
 import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
@@ -12,6 +12,11 @@ export function Topbar() {
   const { theme, setTheme } = useTheme();
   const [query, setQuery] = useState("");
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const isDark = theme === "dark";
   const pageMeta = useMemo(() => {
@@ -87,7 +92,15 @@ export function Topbar() {
             onClick={() => setTheme(isDark ? "light" : "dark")}
             aria-label="Alternar tema"
           >
-            {isDark ? <SunMedium className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {mounted ? (
+              isDark ? (
+                <SunMedium className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )
+            ) : (
+              <span className="inline-block h-4 w-4" aria-hidden />
+            )}
           </Button>
           <Button variant="soft" size="sm" aria-label="Notificacoes">
             <Bell className="h-4 w-4" />
