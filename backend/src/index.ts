@@ -11,7 +11,9 @@ import { reflectionsRouter } from "./routes/reflections.js";
 import { pomodoroRouter } from "./routes/pomodoro.js";
 
 const app = express();
-const port = Number(process.env.PORT ?? 4000);
+// Use a safe fallback when PORT is empty or not set.
+// If process.env.PORT is an empty string Number('') === 0, which is not desired.
+const port = Number(process.env.PORT) || 4000;
 
 app.use(
   cors({
