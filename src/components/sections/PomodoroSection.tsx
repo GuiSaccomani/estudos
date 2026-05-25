@@ -173,12 +173,12 @@ export function PomodoroSection() {
                 onChange={(event) => setDuration(event.target.value)}
                 placeholder="Minutos"
               />
-              <div className="flex gap-2">
-                <Button onClick={() => setIsRunning((prev) => !prev)}>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button onClick={() => setIsRunning((prev) => !prev)} className="w-full sm:w-auto">
                   {isRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                   {isRunning ? "Pausar" : "Iniciar"}
                 </Button>
-                <Button variant="ghost" onClick={handleReset}>
+                <Button variant="ghost" onClick={handleReset} className="w-full sm:w-auto">
                   <RotateCcw className="h-4 w-4" />
                   Resetar
                 </Button>

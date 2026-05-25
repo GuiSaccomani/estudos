@@ -41,13 +41,11 @@ export function DashboardSection() {
     let isMounted = true;
     setIsLoading(true);
     Promise.all([
-      apiFetch<{ id: string }[]>("/api/subjects"),
       apiFetch<{ id: string }[]>("/api/flashcards"),
       apiFetch<Goal[]>("/api/goals"),
       apiFetch<PomodoroSession[]>("/api/pomodoro"),
-      apiFetch<{ id: string }[]>("/api/calendar"),
     ])
-      .then(([subjects, flashcards, goals, sessions]) => {
+      .then(([flashcards, goals, sessions]) => {
         if (!isMounted) return;
 
         const today = new Date();
@@ -118,6 +116,10 @@ export function DashboardSection() {
   }, []);
 
   const hasWeekly = useMemo(() => weekly.some((value) => value > 0), [weekly]);
+  const displayStats: ({ label: string; value: string; detail: string } | undefined)[] =
+    isLoading
+      ? Array.from({ length: 4 }).map(() => undefined)
+      : stats;
 
   return (
     <section className="space-y-6">
@@ -134,23 +136,23 @@ export function DashboardSection() {
         animate="show"
         className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
       >
-        {(isLoading ? Array.from({ length: 4 }) : stats).map((stat, index) => (
+        {displayStats.map((stat, index) => (
           <motion.div key={stat?.label ?? `stat-${index}`} variants={item}>
             <Card>
               <CardHeader>
                 {isLoading ? (
                   <Skeleton className="h-4 w-28" />
                 ) : (
-                  <CardDescription>{stat.label}</CardDescription>
+                  <CardDescription>{stat!.label}</CardDescription>
                 )}
                 {isLoading ? (
                   <Skeleton className="mt-3 h-7 w-24" />
                 ) : (
-                  <CardTitle>{stat.value}</CardTitle>
+                  <CardTitle>{stat!.value}</CardTitle>
                 )}
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground">
-                {isLoading ? <Skeleton className="h-3 w-24" /> : stat.detail}
+                {isLoading ? <Skeleton className="h-3 w-24" /> : stat!.detail}
               </CardContent>
             </Card>
           </motion.div>

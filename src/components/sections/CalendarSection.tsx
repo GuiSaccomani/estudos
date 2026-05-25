@@ -133,7 +133,7 @@ export function CalendarSection() {
               value={time}
               onChange={(event) => setTime(event.target.value)}
             />
-            <Button type="submit">Adicionar</Button>
+            <Button type="submit" className="w-full md:w-auto">Adicionar</Button>
           </form>
         </CardContent>
       </Card>
@@ -171,6 +171,7 @@ export function CalendarSection() {
                 variant="ghost"
                 size="sm"
                 onClick={() => handleDelete(eventItem.id)}
+                className="w-full md:w-auto"
               >
                 <Trash2 className="h-4 w-4" />
                 Remover

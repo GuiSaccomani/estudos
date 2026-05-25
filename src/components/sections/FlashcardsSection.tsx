@@ -196,10 +196,10 @@ export function FlashcardsSection() {
                 <option value="Media">Media</option>
                 <option value="Alta">Alta</option>
               </select>
-              <div className="flex gap-2">
-                <Button type="submit">{isEditing ? "Salvar" : "Adicionar"}</Button>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button type="submit" className="w-full sm:w-auto">{isEditing ? "Salvar" : "Adicionar"}</Button>
                 {isEditing ? (
-                  <Button type="button" variant="ghost" onClick={resetForm}>
+                  <Button type="button" variant="ghost" onClick={resetForm} className="w-full sm:w-auto">
                     Cancelar
                   </Button>
                 ) : null}
@@ -225,11 +225,11 @@ export function FlashcardsSection() {
                     <p className="mt-2 text-muted-foreground">{quizCard.back}</p>
                   ) : null}
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="soft" onClick={() => setShowAnswer((prev) => !prev)}>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button variant="soft" onClick={() => setShowAnswer((prev) => !prev)} className="w-full sm:w-auto">
                     {showAnswer ? "Ocultar resposta" : "Mostrar resposta"}
                   </Button>
-                  <Button onClick={nextQuiz}>Proximo</Button>
+                  <Button onClick={nextQuiz} className="w-full sm:w-auto">Proximo</Button>
                 </div>
               </div>
             ) : (
@@ -292,11 +292,11 @@ export function FlashcardsSection() {
                   {card.difficulty}
                 </Badge>
                 <div className="flex flex-wrap gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => handleEdit(card)}>
+                  <Button variant="ghost" size="sm" onClick={() => handleEdit(card)} className="w-full sm:w-auto">
                     <Pencil className="h-4 w-4" />
                     Editar
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleDelete(card.id)}>
+                  <Button variant="ghost" size="sm" onClick={() => handleDelete(card.id)} className="w-full sm:w-auto">
                     <Trash2 className="h-4 w-4" />
                     Remover
                   </Button>

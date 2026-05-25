@@ -163,10 +163,10 @@ export function GoalsSection() {
               onChange={(event) => setProgress(event.target.value)}
               placeholder="Progresso"
             />
-            <div className="flex gap-2">
-              <Button type="submit">{isEditing ? "Salvar" : "Adicionar"}</Button>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button type="submit" className="w-full sm:w-auto">{isEditing ? "Salvar" : "Adicionar"}</Button>
               {isEditing ? (
-                <Button type="button" variant="ghost" onClick={resetForm}>
+                <Button type="button" variant="ghost" onClick={resetForm} className="w-full sm:w-auto">
                   Cancelar
                 </Button>
               ) : null}
@@ -198,12 +198,12 @@ export function GoalsSection() {
               <p className="text-xs text-muted-foreground">
                 {goal.progress}% concluido
               </p>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => handleEdit(goal)}>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="ghost" size="sm" onClick={() => handleEdit(goal)} className="w-full sm:w-auto">
                   <Pencil className="h-4 w-4" />
                   Editar
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => handleDelete(goal.id)}>
+                <Button variant="ghost" size="sm" onClick={() => handleDelete(goal.id)} className="w-full sm:w-auto">
                   <Trash2 className="h-4 w-4" />
                   Remover
                 </Button>
