@@ -65,7 +65,7 @@ export function Topbar() {
         <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
           Dashboard pessoal
         </p>
-        <h2 className="text-2xl font-semibold">{pageMeta.title}</h2>
+        <h2 className="text-lg sm:text-2xl font-semibold">{pageMeta.title}</h2>
         <p className="text-sm text-muted-foreground">
           {pageMeta.subtitle}
         </p>
