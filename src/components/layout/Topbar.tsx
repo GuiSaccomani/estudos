@@ -71,12 +71,12 @@ export function Topbar() {
         </p>
       </div>
       <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-        <div className="relative w-full max-w-xs">
+        <div className="relative w-full max-w-full sm:max-w-xs">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            className="pl-10"
+            className="pl-10 w-full"
             placeholder="Buscar temas, filosofos, flashcards"
           />
         </div>
