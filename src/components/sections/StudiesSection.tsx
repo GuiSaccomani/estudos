@@ -30,6 +30,8 @@ export function StudiesSection() {
   const [tags, setTags] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
+  const [showAttachmentPrompt, setShowAttachmentPrompt] = useState(false);
+  const [showAttachmentInput, setShowAttachmentInput] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editTopics, setEditTopics] = useState("1");
@@ -46,6 +48,8 @@ export function StudiesSection() {
     setTags("");
     setAttachments([]);
     setAttachmentError(null);
+    setShowAttachmentPrompt(false);
+    setShowAttachmentInput(false);
   };
 
   const resetEdit = () => {
@@ -120,8 +124,7 @@ export function StudiesSection() {
     };
   }, []);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const submitForm = async () => {
     const parsedTags = tags
       .split(",")
       .map((tag) => tag.trim())
@@ -145,6 +148,40 @@ export function StudiesSection() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar materia");
     }
+  };
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!showAttachmentInput && !showAttachmentPrompt) {
+      setShowAttachmentPrompt(true);
+      return;
+    }
+    void submitForm();
+  };
+
+  const handleAddClick = () => {
+    if (!showAttachmentInput && !showAttachmentPrompt) {
+      setShowAttachmentPrompt(true);
+      return;
+    }
+    void submitForm();
+  };
+
+  const handleAttachmentChoice = (acceptAttachments: boolean) => {
+    setShowAttachmentPrompt(false);
+    if (!acceptAttachments) {
+      setShowAttachmentInput(false);
+      setAttachments([]);
+      setAttachmentError(null);
+      return;
+    }
+    setShowAttachmentInput(true);
+  };
+
+  const closeAttachments = () => {
+    setShowAttachmentInput(false);
+    setAttachments([]);
+    setAttachmentError(null);
   };
 
   const handleEditSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -268,23 +305,48 @@ export function StudiesSection() {
               placeholder="Tags separadas por virgula"
             />
             <div className="flex gap-2">
-              <Button type="submit">Adicionar</Button>
+              <Button type="button" onClick={handleAddClick}>Adicionar</Button>
             </div>
           </form>
-          <div className="mt-3 grid gap-2 sm:grid-cols-[1fr,auto] sm:items-center">
-            <input
-              type="file"
-              accept="image/*,application/pdf"
-              multiple
-              onChange={handleAttachments}
-              className="text-sm text-muted-foreground"
-            />
-            {attachments.length ? (
-              <span className="text-xs text-muted-foreground">
-                {attachments.length} arquivo(s) anexado(s)
-              </span>
-            ) : null}
-          </div>
+          {showAttachmentPrompt ? (
+            <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm">
+              <p className="font-semibold">Deseja adicionar PDF ou imagem?</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button type="button" size="sm" onClick={() => handleAttachmentChoice(true)}>
+                  Sim
+                </Button>
+                <Button type="button" size="sm" onClick={() => handleAttachmentChoice(false)}>
+                  Nao
+                </Button>
+              </div>
+            </div>
+          ) : null}
+          {showAttachmentInput ? (
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <label className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-foreground px-5 text-sm font-semibold text-background transition hover:bg-foreground/90">
+                Adicionar PDF ou imagem
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  multiple
+                  onChange={handleAttachments}
+                  className="sr-only"
+                />
+              </label>
+              {attachments.length ? (
+                <span className="text-xs text-muted-foreground">
+                  {attachments.length} arquivo(s) anexado(s)
+                </span>
+              ) : (
+                <span className="text-xs text-muted-foreground">
+                  Nenhum arquivo selecionado
+                </span>
+              )}
+              <Button type="button" variant="ghost" size="sm" onClick={closeAttachments}>
+                Fechar anexos
+              </Button>
+            </div>
+          ) : null}
           {attachmentError ? (
             <p className="text-xs text-red-500">{attachmentError}</p>
           ) : null}
@@ -389,19 +451,29 @@ export function StudiesSection() {
                 </Button>
               </div>
             </form>
-            <div className="mt-3 grid gap-2 sm:grid-cols-[1fr,auto] sm:items-center">
-              <input
-                type="file"
-                accept="image/*,application/pdf"
-                multiple
-                onChange={handleEditAttachments}
-                className="text-sm text-muted-foreground"
-              />
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <label className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-foreground px-5 text-sm font-semibold text-background transition hover:bg-foreground/90">
+                Adicionar PDF ou imagem
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  multiple
+                  onChange={handleEditAttachments}
+                  className="sr-only"
+                />
+              </label>
               {editAttachments.length ? (
                 <span className="text-xs text-muted-foreground">
                   {editAttachments.length} arquivo(s) anexado(s)
                 </span>
-              ) : null}
+              ) : (
+                <span className="text-xs text-muted-foreground">
+                  Nenhum arquivo selecionado
+                </span>
+              )}
+              <Button type="button" variant="ghost" size="sm" onClick={() => setEditAttachments([])}>
+                Limpar anexos
+              </Button>
             </div>
             {editAttachmentError ? (
               <p className="text-xs text-red-500">{editAttachmentError}</p>

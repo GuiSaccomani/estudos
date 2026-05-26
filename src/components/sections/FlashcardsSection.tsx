@@ -207,7 +207,7 @@ export function FlashcardsSection() {
                 onChange={(event) =>
                   setDifficulty(event.target.value as Flashcard["difficulty"])
                 }
-                className="h-11 rounded-2xl border border-white/10 bg-white/5 px-3 text-sm"
+                className="h-11 rounded-2xl border border-white/10 bg-white/5 px-3 text-sm text-foreground"
               >
                 <option value="Baixa">Baixa</option>
                 <option value="Media">Media</option>

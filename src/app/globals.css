@@ -107,3 +107,9 @@ h2,
 h3 {
   font-family: var(--font-display), var(--font-sans), ui-serif, serif;
 }
+
+select,
+option {
+  color: var(--foreground);
+  background-color: var(--card);
+}
