@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { BookOpen, FileText, FolderKanban, Pencil, Trash2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 import { apiFetch } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
@@ -29,8 +30,14 @@ export function StudiesSection() {
   const [tags, setTags] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editTopics, setEditTopics] = useState("1");
+  const [editTags, setEditTags] = useState("");
+  const [editAttachments, setEditAttachments] = useState<File[]>([]);
+  const [editAttachmentError, setEditAttachmentError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
 
-  const isEditing = useMemo(() => editingId !== null, [editingId]);
 
   const resetForm = () => {
     setEditingId(null);
@@ -41,24 +48,58 @@ export function StudiesSection() {
     setAttachmentError(null);
   };
 
+  const resetEdit = () => {
+    setEditingId(null);
+    setEditTitle("");
+    setEditTopics("1");
+    setEditTags("");
+    setEditAttachments([]);
+    setEditAttachmentError(null);
+    setEditOpen(false);
+  };
+
   const handleAttachments = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
-    const invalid = files.find((file) => !file.type.startsWith("image/"));
+    const invalid = files.find(
+      (file) => !(file.type.startsWith("image/") || file.type === "application/pdf")
+    );
     if (invalid) {
-      setAttachmentError("Somente imagens sao aceitas.");
+      setAttachmentError("Somente imagens ou PDF sao aceitos.");
       setAttachments([]);
       return;
     }
 
-    const tooLarge = files.find((file) => file.size > 5 * 1024 * 1024);
+    const tooLarge = files.find((file) => file.size > 10 * 1024 * 1024);
     if (tooLarge) {
-      setAttachmentError("Cada imagem deve ter ate 5MB.");
+      setAttachmentError("Cada arquivo deve ter ate 10MB.");
       setAttachments([]);
       return;
     }
 
     setAttachmentError(null);
     setAttachments(files);
+  };
+
+  const handleEditAttachments = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    const invalid = files.find(
+      (file) => !(file.type.startsWith("image/") || file.type === "application/pdf")
+    );
+    if (invalid) {
+      setEditAttachmentError("Somente imagens ou PDF sao aceitos.");
+      setEditAttachments([]);
+      return;
+    }
+
+    const tooLarge = files.find((file) => file.size > 10 * 1024 * 1024);
+    if (tooLarge) {
+      setEditAttachmentError("Cada arquivo deve ter ate 10MB.");
+      setEditAttachments([]);
+      return;
+    }
+
+    setEditAttachmentError(null);
+    setEditAttachments(files);
   };
 
   useEffect(() => {
@@ -94,20 +135,40 @@ export function StudiesSection() {
     if (!payload.title) return;
 
     try {
-      if (editingId) {
-        const updated = await apiFetch<StudySubject>(`/api/subjects/${editingId}`, {
-          method: "PUT",
-          body: JSON.stringify(payload),
-        });
-        setSubjects(subjects.map((subject) => (subject.id === editingId ? updated : subject)));
-      } else {
-        const created = await apiFetch<StudySubject>("/api/subjects", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
-        setSubjects([created, ...subjects]);
-      }
+      const created = await apiFetch<StudySubject>("/api/subjects", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      setSubjects([created, ...subjects]);
       resetForm();
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao salvar materia");
+    }
+  };
+
+  const handleEditSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!editingId) return;
+    const parsedTags = editTags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+    const payload = {
+      title: editTitle.trim(),
+      topics: Number(editTopics) || 1,
+      tags: parsedTags.length ? parsedTags : ["Revisao"],
+    };
+
+    if (!payload.title) return;
+
+    try {
+      const updated = await apiFetch<StudySubject>(`/api/subjects/${editingId}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      setSubjects(subjects.map((subject) => (subject.id === editingId ? updated : subject)));
+      resetEdit();
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar materia");
@@ -116,9 +177,12 @@ export function StudiesSection() {
 
   const handleEdit = (subject: StudySubject) => {
     setEditingId(subject.id);
-    setTitle(subject.title);
-    setTopics(String(subject.topics));
-    setTags(subject.tags.join(", "));
+    setEditTitle(subject.title);
+    setEditTopics(String(subject.topics));
+    setEditTags(subject.tags.join(", "));
+    setEditAttachments([]);
+    setEditAttachmentError(null);
+    setEditOpen(true);
   };
 
   const handleDelete = async (subjectId: string) => {
@@ -126,13 +190,22 @@ export function StudiesSection() {
       await apiFetch<void>(`/api/subjects/${subjectId}`, { method: "DELETE" });
       setSubjects(subjects.filter((subject) => subject.id !== subjectId));
       if (editingId === subjectId) {
-        resetForm();
+        resetEdit();
       }
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao remover materia");
     }
   };
+
+  const query = (searchParams.get("q") ?? "").trim().toLowerCase();
+  const filteredSubjects = useMemo(() => {
+    if (!query) return subjects;
+    return subjects.filter((subject) => {
+      const text = [subject.title, ...subject.tags].join(" ").toLowerCase();
+      return text.includes(query);
+    });
+  }, [subjects, query]);
 
   if (isLoading) {
     return (
@@ -170,7 +243,7 @@ export function StudiesSection() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{isEditing ? "Editar materia" : "Nova materia"}</CardTitle>
+          <CardTitle>Nova materia</CardTitle>
           <CardDescription>
             Adicione materias, topicos e tags para manter o estudo organizado.
           </CardDescription>
@@ -195,25 +268,20 @@ export function StudiesSection() {
               placeholder="Tags separadas por virgula"
             />
             <div className="flex gap-2">
-              <Button type="submit">{isEditing ? "Salvar" : "Adicionar"}</Button>
-              {isEditing ? (
-                <Button type="button" variant="ghost" onClick={resetForm}>
-                  Cancelar
-                </Button>
-              ) : null}
+              <Button type="submit">Adicionar</Button>
             </div>
           </form>
           <div className="mt-3 grid gap-2 sm:grid-cols-[1fr,auto] sm:items-center">
             <input
               type="file"
-              accept="image/*"
+              accept="image/*,application/pdf"
               multiple
               onChange={handleAttachments}
               className="text-sm text-muted-foreground"
             />
             {attachments.length ? (
               <span className="text-xs text-muted-foreground">
-                {attachments.length} imagem(ns) anexada(s)
+                {attachments.length} arquivo(s) anexado(s)
               </span>
             ) : null}
           </div>
@@ -228,15 +296,19 @@ export function StudiesSection() {
       ) : null}
 
       <div className="grid gap-4 md:grid-cols-3">
-        {subjects.length === 0 ? (
+        {filteredSubjects.length === 0 ? (
           <Card>
             <CardHeader>
               <CardTitle>Nenhuma materia criada</CardTitle>
-              <CardDescription>Adicione sua primeira materia para comecar.</CardDescription>
+              <CardDescription>
+                {query
+                  ? "Nenhuma materia encontrada para a busca."
+                  : "Adicione sua primeira materia para comecar."}
+              </CardDescription>
             </CardHeader>
           </Card>
         ) : null}
-        {subjects.map((subject) => (
+        {filteredSubjects.map((subject) => (
           <Card key={subject.id}>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -277,6 +349,66 @@ export function StudiesSection() {
           </Card>
         ))}
       </div>
+
+      {editOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-background p-6 shadow-xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                  Editar materia
+                </p>
+                <h3 className="text-lg font-semibold">Atualizar conteudo</h3>
+              </div>
+              <Button variant="ghost" size="sm" onClick={resetEdit}>
+                Fechar
+              </Button>
+            </div>
+            <form className="mt-4 grid gap-3 md:grid-cols-[2fr,1fr,2fr,auto]" onSubmit={handleEditSubmit}>
+              <Input
+                value={editTitle}
+                onChange={(event) => setEditTitle(event.target.value)}
+                placeholder="Ex: Filosofia Contemporanea"
+              />
+              <Input
+                type="number"
+                min={1}
+                value={editTopics}
+                onChange={(event) => setEditTopics(event.target.value)}
+                placeholder="Topicos"
+              />
+              <Input
+                value={editTags}
+                onChange={(event) => setEditTags(event.target.value)}
+                placeholder="Tags separadas por virgula"
+              />
+              <div className="flex gap-2">
+                <Button type="submit">Salvar</Button>
+                <Button type="button" variant="ghost" onClick={resetEdit}>
+                  Cancelar
+                </Button>
+              </div>
+            </form>
+            <div className="mt-3 grid gap-2 sm:grid-cols-[1fr,auto] sm:items-center">
+              <input
+                type="file"
+                accept="image/*,application/pdf"
+                multiple
+                onChange={handleEditAttachments}
+                className="text-sm text-muted-foreground"
+              />
+              {editAttachments.length ? (
+                <span className="text-xs text-muted-foreground">
+                  {editAttachments.length} arquivo(s) anexado(s)
+                </span>
+              ) : null}
+            </div>
+            {editAttachmentError ? (
+              <p className="text-xs text-red-500">{editAttachmentError}</p>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

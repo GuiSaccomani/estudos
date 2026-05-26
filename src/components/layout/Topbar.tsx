@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { Bell, Moon, Search, SunMedium } from "lucide-react";
 import { useTheme } from "next-themes";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,11 +12,29 @@ export function Topbar() {
   const { theme, setTheme } = useTheme();
   const [query, setQuery] = useState("");
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    const current = searchParams.get("q") ?? "";
+    setQuery(current);
+  }, [searchParams]);
+
+  const handleSearchChange = (value: string) => {
+    setQuery(value);
+    const params = new URLSearchParams(searchParams.toString());
+    if (value.trim()) {
+      params.set("q", value);
+    } else {
+      params.delete("q");
+    }
+    router.replace(`${pathname}?${params.toString()}`);
+  };
 
   const isDark = theme === "dark";
   const pageMeta = useMemo(() => {
@@ -80,7 +98,7 @@ export function Topbar() {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => handleSearchChange(event.target.value)}
             className="pl-10 w-full"
             placeholder="Buscar temas, filosofos, flashcards"
           />

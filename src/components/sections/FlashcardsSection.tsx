@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Flame, Layers, Pencil, Play, Trash2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 import { apiFetch } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
@@ -32,8 +33,18 @@ export function FlashcardsSection() {
   const [quizIndex, setQuizIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const formRef = useRef<HTMLDivElement | null>(null);
+  const searchParams = useSearchParams();
 
   const isEditing = useMemo(() => editingId !== null, [editingId]);
+  const query = (searchParams.get("q") ?? "").trim().toLowerCase();
+  const filteredCards = useMemo(() => {
+    if (!query) return cards;
+    return cards.filter((card) =>
+      [card.front, card.back, card.difficulty]
+        .filter(Boolean)
+        .some((value) => value.toLowerCase().includes(query))
+    );
+  }, [cards, query]);
   const quizCard = cards[quizIndex];
 
   useEffect(() => {
@@ -248,15 +259,19 @@ export function FlashcardsSection() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        {cards.length === 0 ? (
+        {filteredCards.length === 0 ? (
           <Card>
             <CardHeader>
               <CardTitle>Nenhum flashcard ainda</CardTitle>
-              <CardDescription>Crie um card para iniciar a revisao.</CardDescription>
+              <CardDescription>
+                {query
+                  ? "Nenhum flashcard encontrado para a busca."
+                  : "Crie um card para iniciar a revisao."}
+              </CardDescription>
             </CardHeader>
           </Card>
         ) : null}
-        {cards.map((card, index) => (
+        {filteredCards.map((card, index) => (
           <motion.div
             key={card.id}
             initial={{ opacity: 0, y: 16 }}
@@ -264,7 +279,7 @@ export function FlashcardsSection() {
             viewport={{ once: true }}
             transition={{ delay: index * 0.1 }}
           >
-            <Card className="h-full">
+            <Card className={editingId === card.id ? "h-full ring-1 ring-accent/60" : "h-full"}>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>{card.front}</CardTitle>
