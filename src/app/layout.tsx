@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Serif_Display, Sora } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Shell } from "@/components/layout/Shell";
@@ -34,7 +35,9 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-background text-foreground">
         <Providers>
-          <Shell>{children}</Shell>
+          <Suspense fallback={<div className="min-h-screen" />}>
+            <Shell>{children}</Shell>
+          </Suspense>
         </Providers>
       </body>
     </html>
