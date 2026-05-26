@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Flame, Layers, Pencil, Play, Trash2 } from "lucide-react";
 
@@ -31,6 +31,7 @@ export function FlashcardsSection() {
   const [flipped, setFlipped] = useState<string[]>([]);
   const [quizIndex, setQuizIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
+  const formRef = useRef<HTMLDivElement | null>(null);
 
   const isEditing = useMemo(() => editingId !== null, [editingId]);
   const quizCard = cards[quizIndex];
@@ -60,6 +61,11 @@ export function FlashcardsSection() {
       setQuizIndex(0);
     }
   }, [cards.length, quizIndex]);
+
+  useEffect(() => {
+    if (!editingId) return;
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [editingId]);
 
   const resetForm = () => {
     setEditingId(null);
@@ -165,8 +171,8 @@ export function FlashcardsSection() {
         <p className="text-sm text-red-500">{error}</p>
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-[2fr,1fr]">
-        <Card>
+      <div className="grid gap-4 lg:grid-cols-[2fr,1fr]" ref={formRef}>
+        <Card className={editingId ? "ring-1 ring-accent/60" : undefined}>
           <CardHeader>
             <CardTitle>{isEditing ? "Editar flashcard" : "Novo flashcard"}</CardTitle>
             <CardDescription>

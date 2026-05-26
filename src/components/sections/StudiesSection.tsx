@@ -27,6 +27,8 @@ export function StudiesSection() {
   const [title, setTitle] = useState("");
   const [topics, setTopics] = useState("1");
   const [tags, setTags] = useState("");
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
 
   const isEditing = useMemo(() => editingId !== null, [editingId]);
 
@@ -35,6 +37,28 @@ export function StudiesSection() {
     setTitle("");
     setTopics("1");
     setTags("");
+    setAttachments([]);
+    setAttachmentError(null);
+  };
+
+  const handleAttachments = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    const invalid = files.find((file) => !file.type.startsWith("image/"));
+    if (invalid) {
+      setAttachmentError("Somente imagens sao aceitas.");
+      setAttachments([]);
+      return;
+    }
+
+    const tooLarge = files.find((file) => file.size > 5 * 1024 * 1024);
+    if (tooLarge) {
+      setAttachmentError("Cada imagem deve ter ate 5MB.");
+      setAttachments([]);
+      return;
+    }
+
+    setAttachmentError(null);
+    setAttachments(files);
   };
 
   useEffect(() => {
@@ -179,6 +203,23 @@ export function StudiesSection() {
               ) : null}
             </div>
           </form>
+          <div className="mt-3 grid gap-2 sm:grid-cols-[1fr,auto] sm:items-center">
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleAttachments}
+              className="text-sm text-muted-foreground"
+            />
+            {attachments.length ? (
+              <span className="text-xs text-muted-foreground">
+                {attachments.length} imagem(ns) anexada(s)
+              </span>
+            ) : null}
+          </div>
+          {attachmentError ? (
+            <p className="text-xs text-red-500">{attachmentError}</p>
+          ) : null}
         </CardContent>
       </Card>
 
