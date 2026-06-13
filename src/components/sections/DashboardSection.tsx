@@ -138,31 +138,31 @@ export function DashboardSection() {
       >
         {displayStats.map((stat, index) => (
           <motion.div key={stat?.label ?? `stat-${index}`} variants={item}>
-            <Card>
+            <Card className="backdrop-blur-md bg-white/5 border-white/10 hover:border-white/20 transition-all duration-300">
               <CardHeader>
                 {isLoading ? (
-                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-4 w-28 bg-white/10" />
                 ) : (
                   <CardDescription>{stat!.label}</CardDescription>
                 )}
                 {isLoading ? (
-                  <Skeleton className="mt-3 h-7 w-24" />
+                  <Skeleton className="mt-3 h-7 w-24 bg-white/10" />
                 ) : (
-                  <CardTitle>{stat!.value}</CardTitle>
+                  <CardTitle className="text-2xl">{stat!.value}</CardTitle>
                 )}
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground">
-                {isLoading ? <Skeleton className="h-3 w-24" /> : stat!.detail}
+                {isLoading ? <Skeleton className="h-3 w-24 bg-white/10" /> : stat!.detail}
               </CardContent>
             </Card>
           </motion.div>
         ))}
       </motion.div>
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden backdrop-blur-md bg-white/5 border-white/10 hover:border-white/20 transition-all duration-300">
         <CardHeader>
           <CardTitle>Ritmo semanal</CardTitle>
-          <CardDescription>Horas de estudo nos ultimos 7 dias.</CardDescription>
+          <CardDescription>Horas de estudo nos últimos 7 dias.</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
