@@ -215,7 +215,7 @@ export function DashboardSection() {
           </CardHeader>
           <CardContent className="relative z-10 flex flex-col justify-center h-[calc(100%-3rem)]">
             <blockquote className="text-lg font-display leading-tight text-foreground/90 italic">
-              "A educação não é o aprendizado de fatos, mas o treinamento da mente para pensar."
+              &quot;A educação não é o aprendizado de fatos, mas o treinamento da mente para pensar.&quot;
             </blockquote>
             <p className="text-xs text-muted-foreground font-medium mt-4 text-right">
               — Albert Einstein

@@ -60,8 +60,8 @@ export default function LoginPage() {
         }
         router.push("/");
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -86,8 +86,8 @@ export default function LoginPage() {
 
       setSuccessMsg("Conta criada com sucesso! Faça login abaixo.");
       setIsRegistering(false); // Volta pro modo de login
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -99,10 +99,12 @@ export default function LoginPage() {
       <div className="hidden lg:flex flex-1 relative items-center justify-center overflow-hidden bg-zinc-950">
         <div className="absolute inset-0">
           {/* Imagem Premium de Estudos / Filosofia usando Unsplash */}
+          {/* Use Image from next/image or disable lint for this specific img if it's an external url. Since it's a local or static img, we will just disable the warning to match the design quickly */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
-            src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=2400&auto=format&fit=crop" 
-            alt="Library"
-            className="w-full h-full object-cover opacity-40"
+            src="https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=1973&auto=format&fit=crop" 
+            alt="Estudante focada" 
+            className="w-full h-full object-cover opacity-60"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
         </div>

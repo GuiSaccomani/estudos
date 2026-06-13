@@ -747,7 +747,7 @@ export function StudiesSection() {
                     <Sparkles className="h-12 w-12 text-muted-foreground mb-4" />
                     <p className="text-sm font-medium">Nenhum resumo gerado ainda.</p>
                     <p className="text-xs text-muted-foreground mt-2 max-w-[250px]">
-                      Adicione anotações ou fotos ao lado e clique em "Resumir com IA".
+                      Adicione anotações ou fotos ao lado e clique em &quot;Resumir com IA&quot;.
                     </p>
                   </div>
                 )}

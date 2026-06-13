@@ -58,8 +58,8 @@ export function LoginModal({ onClose }: { onClose: () => void }) {
         }
         // Fechará sozinho pelo AuthProvider onAuthStateChange
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -84,8 +84,8 @@ export function LoginModal({ onClose }: { onClose: () => void }) {
 
       setSuccessMsg("Conta criada com sucesso! Faça login abaixo.");
       setIsRegistering(false); // Volta pro modo de login
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
