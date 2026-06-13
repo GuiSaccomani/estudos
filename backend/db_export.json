@@ -1,0 +1,50 @@
+{
+  "subjects": [
+    {
+      "id": "cmplpm1si0005i73pslk4kxja",
+      "title": "Economia Politica Internacional EPI",
+      "topics": 1,
+      "tags": [
+        "Revisao"
+      ],
+      "createdAt": "2026-05-25T21:19:37.282Z",
+      "updatedAt": "2026-05-25T21:19:37.282Z"
+    },
+    {
+      "id": "cmplplh1o0004i73peq9lmpls",
+      "title": "Introdução a Probabilidade e Estatistica IPE",
+      "topics": 1,
+      "tags": [
+        "Revisao"
+      ],
+      "createdAt": "2026-05-25T21:19:10.392Z",
+      "updatedAt": "2026-05-25T21:19:44.973Z"
+    },
+    {
+      "id": "cmplpn0km0007i73po4a1tb7z",
+      "title": "Bases Computacionais da Ciencia BCC",
+      "topics": 1,
+      "tags": [
+        "Revisao"
+      ],
+      "createdAt": "2026-05-25T21:20:22.342Z",
+      "updatedAt": "2026-05-25T21:20:22.342Z"
+    },
+    {
+      "id": "cmplpmnd60006i73p96x08dh6",
+      "title": "Historia da Politica Externa Brasileira HPEB",
+      "topics": 1,
+      "tags": [
+        "Revisao"
+      ],
+      "createdAt": "2026-05-25T21:20:05.237Z",
+      "updatedAt": "2026-05-26T23:02:10.972Z"
+    }
+  ],
+  "flashcards": [],
+  "goals": [],
+  "calendarEvents": [],
+  "philosophyThemes": [],
+  "reflections": [],
+  "pomodoroSessions": []
+}
