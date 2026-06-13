@@ -49,7 +49,7 @@ export function LoginModal({ onClose }: { onClose: () => void }) {
       }
 
       if (data.session) {
-        if (username.trim().toLowerCase() === "isabel.cuchiaro") {
+        if (username.trim().toLowerCase().includes("isabel.cuchiaro")) {
           try {
              await apiFetch("/api/auth/claim-legacy", { method: "POST" });
           } catch (e) {
