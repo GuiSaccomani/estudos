@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { BrainCircuit, Network, Quote, Sparkle, Trash2 } from "lucide-react";
 
-import { philosophicalTimeline } from "@/data/mock";
 import { apiFetch } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -399,15 +398,20 @@ export function PhilosophySection() {
               <CardDescription>Linhas de tempo conectadas a eventos atuais.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {philosophicalTimeline.map((item) => (
-                <div key={item.philosopher} className="space-y-1">
+              {reflections.slice(0, 3).map((item) => (
+                <div key={item.id} className="space-y-1 border-l-2 border-accent/50 pl-3">
                   <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    {item.era}
+                    Reflexão
                   </p>
-                  <p className="text-sm font-semibold">{item.philosopher}</p>
-                  <p className="text-xs text-muted-foreground">{item.impact}</p>
+                  <p className="text-sm font-semibold">{item.title}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2">{item.content}</p>
                 </div>
               ))}
+              {reflections.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Crie reflexões para preencher sua linha do tempo filosófica.
+                </p>
+              )}
             </CardContent>
           </Card>
           <Card>
