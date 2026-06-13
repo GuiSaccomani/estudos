@@ -94,7 +94,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex bg-background">
+    <div className="h-screen min-h-screen w-full flex bg-background">
       {/* Esquerda - Imagem / Branding */}
       <div className="hidden lg:flex flex-1 relative items-center justify-center overflow-hidden bg-zinc-950">
         <div className="absolute inset-0">
@@ -102,7 +102,7 @@ export default function LoginPage() {
           {/* Use Image from next/image or disable lint for this specific img if it's an external url. Since it's a local or static img, we will just disable the warning to match the design quickly */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
-            src="https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=1973&auto=format&fit=crop" 
+            src="https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=1973&auto=format&fit=crop" 
             alt="Estudante focada" 
             className="w-full h-full object-cover opacity-60"
           />
