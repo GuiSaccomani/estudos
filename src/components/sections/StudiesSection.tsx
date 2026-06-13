@@ -562,16 +562,26 @@ export function StudiesSection() {
                   PDFs anexados
                 </div>
               </div>
-              <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border/50">
+              <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-border/50">
                 <Button 
                   variant="default" 
                   size="sm" 
                   onClick={() => openStudyModal(subject)}
-                  className="flex-1 bg-gradient-to-r from-accent to-purple-500 hover:from-accent/90 hover:to-purple-500/90 text-white shadow-md group"
+                  className="w-full bg-gradient-to-r from-accent to-purple-500 hover:from-accent/90 hover:to-purple-500/90 text-white shadow-md group"
                 >
                   <Sparkles className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
                   Caderno Inteligente
                 </Button>
+                <div className="flex items-center gap-2 mt-1">
+                  <Button variant="ghost" size="sm" onClick={() => handleEdit(subject)} className="flex-1">
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Editar
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleDelete(subject.id)} className="flex-1 text-red-400 hover:text-red-300 hover:bg-red-400/10">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Remover
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
