@@ -36,8 +36,12 @@ export function FileUpload({ onUploadComplete }: { onUploadComplete?: (url: stri
       }
 
       alert('Upload feito com sucesso!');
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Um erro desconhecido ocorreu.');
+      }
     } finally {
       setUploading(false);
     }
