@@ -10,6 +10,7 @@ import { philosophyRouter } from "./routes/philosophy.js";
 import { reflectionsRouter } from "./routes/reflections.js";
 import { pomodoroRouter } from "./routes/pomodoro.js";
 import { chatRouter } from "./routes/chat.js";
+import { summarizeRouter } from "./routes/summarize.js";
 
 const app = express();
 // Use a safe fallback when PORT is empty or not set.
@@ -27,14 +28,19 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-app.use("/api/subjects", subjectsRouter);
-app.use("/api/flashcards", flashcardsRouter);
-app.use("/api/goals", goalsRouter);
-app.use("/api/calendar", calendarRouter);
-app.use("/api/philosophy", philosophyRouter);
-app.use("/api/reflections", reflectionsRouter);
-app.use("/api/pomodoro", pomodoroRouter);
-app.use("/api/chat", chatRouter);
+import { requireAuth } from "./middleware/auth.js";
+import { authRouter } from "./routes/auth.js";
+
+app.use("/api/auth", requireAuth, authRouter);
+app.use("/api/subjects", requireAuth, subjectsRouter);
+app.use("/api/flashcards", requireAuth, flashcardsRouter);
+app.use("/api/goals", requireAuth, goalsRouter);
+app.use("/api/calendar", requireAuth, calendarRouter);
+app.use("/api/philosophy", requireAuth, philosophyRouter);
+app.use("/api/reflections", requireAuth, reflectionsRouter);
+app.use("/api/pomodoro", requireAuth, pomodoroRouter);
+app.use("/api/chat", requireAuth, chatRouter);
+app.use("/api/summarize", requireAuth, summarizeRouter);
 
 app.listen(port, () => {
   console.log(`API running on port ${port}`);

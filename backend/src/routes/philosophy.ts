@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
-
 import { prisma } from "../prisma.js";
+import { getAuthFilter } from "../middleware/auth.js";
 
 const philosophySchema = z.object({
   theme: z.string().min(1),
@@ -12,8 +12,8 @@ const philosophySchema = z.object({
 
 export const philosophyRouter = Router();
 
-philosophyRouter.get("/", async (_req, res) => {
-  const themes = await prisma.philosophyTheme.findMany({ orderBy: { updatedAt: "desc" } });
+philosophyRouter.get("/", async (req, res) => {
+  const themes = await prisma.philosophyTheme.findMany({ where: getAuthFilter(req.user), orderBy: { updatedAt: "desc" } });
   res.json(themes);
 });
 
@@ -22,7 +22,7 @@ philosophyRouter.post("/", async (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
-  const theme = await prisma.philosophyTheme.create({ data: parsed.data });
+  const theme = await prisma.philosophyTheme.create({ data: { ...parsed.data, userId: req.user.id } });
   return res.status(201).json(theme);
 });
 
@@ -32,13 +32,13 @@ philosophyRouter.put("/:id", async (req, res) => {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
   const theme = await prisma.philosophyTheme.update({
-    where: { id: req.params.id },
+    where: { id: req.params.id, ...getAuthFilter(req.user) },
     data: parsed.data,
   });
   return res.json(theme);
 });
 
 philosophyRouter.delete("/:id", async (req, res) => {
-  await prisma.philosophyTheme.delete({ where: { id: req.params.id } });
+  await prisma.philosophyTheme.delete({ where: { id: req.params.id, ...getAuthFilter(req.user) } });
   return res.status(204).send();
 });

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { GoogleGenAI } from "@google/genai";
 import { prisma } from "../prisma.js";
+import { getAuthFilter } from "../middleware/auth.js";
 
 const router = Router();
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -13,9 +14,9 @@ router.post("/", async (req, res) => {
     }
 
     // Fetch user context from the database
-    const subjects = await prisma.subject.findMany({ select: { title: true } });
-    const goals = await prisma.goal.findMany({ select: { label: true, progress: true } });
-    const reflections = await prisma.reflection.findMany({ select: { title: true } });
+    const subjects = await prisma.subject.findMany({ where: getAuthFilter(req.user), select: { title: true } });
+    const goals = await prisma.goal.findMany({ where: getAuthFilter(req.user), select: { label: true, progress: true } });
+    const reflections = await prisma.reflection.findMany({ where: getAuthFilter(req.user), select: { title: true } });
 
     const subjectsList = subjects.map(s => s.title).join(", ") || "Nenhuma matéria cadastrada";
     const goalsList = goals.map(g => `${g.label} (${g.progress}%)`).join(", ") || "Nenhuma meta";

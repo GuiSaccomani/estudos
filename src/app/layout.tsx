@@ -38,8 +38,7 @@ export default function RootLayout({
       <body className="min-h-full bg-background text-foreground">
         <Providers>
           <Suspense fallback={<div className="min-h-screen" />}>
-            <Shell>{children}</Shell>
-            <AITutor />
+            {children}
           </Suspense>
         </Providers>
       </body>

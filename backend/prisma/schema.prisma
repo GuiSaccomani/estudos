@@ -10,15 +10,20 @@ datasource db {
 
 model Subject {
   id        String   @id @default(cuid())
+  userId    String   @default("legacy_user")
   title     String
   topics    Int      @default(0)
   tags      String[]
+  content   String   @default("")
+  imageUrls String[] @default([])
+  aiSummary String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Flashcard {
   id         String   @id @default(cuid())
+  userId     String   @default("legacy_user")
   front      String
   back       String
   difficulty String
@@ -28,6 +33,7 @@ model Flashcard {
 
 model Goal {
   id        String   @id @default(cuid())
+  userId    String   @default("legacy_user")
   label     String
   detail    String
   progress  Int      @default(0)
@@ -37,6 +43,7 @@ model Goal {
 
 model CalendarEvent {
   id        String   @id @default(cuid())
+  userId    String   @default("legacy_user")
   title     String
   date      String
   time      String
@@ -45,17 +52,19 @@ model CalendarEvent {
 }
 
 model PhilosophyTheme {
-  id          String   @id @default(cuid())
-  theme       String
-  focus       String
-  insight     String
+  id           String   @id @default(cuid())
+  userId       String   @default("legacy_user")
+  theme        String
+  focus        String
+  insight      String
   philosophers String[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Reflection {
   id           String   @id @default(cuid())
+  userId       String   @default("legacy_user")
   title        String
   content      String
   philosophers String[]
@@ -65,6 +74,7 @@ model Reflection {
 
 model PomodoroSession {
   id          String   @id @default(cuid())
+  userId      String   @default("legacy_user")
   label       String
   minutes     Int
   completedAt DateTime

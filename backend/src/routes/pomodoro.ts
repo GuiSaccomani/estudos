@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
-
 import { prisma } from "../prisma.js";
+import { getAuthFilter } from "../middleware/auth.js";
 
 const pomodoroSchema = z.object({
   label: z.string().min(1),
@@ -11,8 +11,8 @@ const pomodoroSchema = z.object({
 
 export const pomodoroRouter = Router();
 
-pomodoroRouter.get("/", async (_req, res) => {
-  const sessions = await prisma.pomodoroSession.findMany({ orderBy: { completedAt: "desc" } });
+pomodoroRouter.get("/", async (req, res) => {
+  const sessions = await prisma.pomodoroSession.findMany({ where: getAuthFilter(req.user), orderBy: { completedAt: "desc" } });
   res.json(sessions);
 });
 
@@ -23,6 +23,7 @@ pomodoroRouter.post("/", async (req, res) => {
   }
   const session = await prisma.pomodoroSession.create({
     data: {
+      userId: req.user.id,
       label: parsed.data.label,
       minutes: parsed.data.minutes,
       completedAt: new Date(parsed.data.completedAt),
@@ -32,6 +33,6 @@ pomodoroRouter.post("/", async (req, res) => {
 });
 
 pomodoroRouter.delete("/:id", async (req, res) => {
-  await prisma.pomodoroSession.delete({ where: { id: req.params.id } });
+  await prisma.pomodoroSession.delete({ where: { id: req.params.id, ...getAuthFilter(req.user) } });
   return res.status(204).send();
 });

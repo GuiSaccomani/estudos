@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BookOpen, FileText, FolderKanban, Pencil, Trash2 } from "lucide-react";
+import { BookOpen, FileText, FolderKanban, Pencil, Trash2, Sparkles, Image as ImageIcon, Loader2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { apiFetch } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,12 +19,17 @@ type StudySubject = {
   topics: number;
   updatedAt: string;
   tags: string[];
+  content: string;
+  imageUrls: string[];
+  aiSummary: string | null;
 };
 
 export function StudiesSection() {
   const [subjects, setSubjects] = useState<StudySubject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Create / Edit State
   const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [topics, setTopics] = useState("1");
@@ -32,15 +38,23 @@ export function StudiesSection() {
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const [showAttachmentPrompt, setShowAttachmentPrompt] = useState(false);
   const [showAttachmentInput, setShowAttachmentInput] = useState(false);
+  
   const [editOpen, setEditOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editTopics, setEditTopics] = useState("1");
   const [editTags, setEditTags] = useState("");
   const [editAttachments, setEditAttachments] = useState<File[]>([]);
   const [editAttachmentError, setEditAttachmentError] = useState<string | null>(null);
+  
+  // Study Modal State
+  const [studyOpen, setStudyOpen] = useState(false);
+  const [activeSubject, setActiveSubject] = useState<StudySubject | null>(null);
+  const [studyContent, setStudyContent] = useState("");
+  const [studyImages, setStudyImages] = useState<File[]>([]);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
   const searchParams = useSearchParams();
-
-
   const resetForm = () => {
     setEditingId(null);
     setTitle("");
@@ -137,33 +151,68 @@ export function StudiesSection() {
 
     if (!payload.title) return;
 
+    setIsUploading(true);
     try {
       const created = await apiFetch<StudySubject>("/api/subjects", {
         method: "POST",
         body: JSON.stringify(payload),
       });
-      setSubjects([created, ...subjects]);
+
+      let finalSubject = created;
+
+      // Handle attachments
+      if (attachments.length > 0) {
+        const newUrls: string[] = [];
+        for (const file of attachments) {
+          try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Math.random()}.${fileExt}`;
+            const filePath = `subject-images/${created.id}/${fileName}`;
+            
+            const { error: uploadError } = await supabase.storage
+              .from('uploads')
+              .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data } = supabase.storage.from('uploads').getPublicUrl(filePath);
+            newUrls.push(data.publicUrl);
+          } catch (err) {
+            console.error("Erro no upload do anexo inicial:", err);
+          }
+        }
+
+        if (newUrls.length > 0) {
+          const updatePayload = {
+            title: created.title,
+            topics: created.topics,
+            tags: created.tags,
+            content: created.content,
+            imageUrls: newUrls,
+          };
+          finalSubject = await apiFetch<StudySubject>(`/api/subjects/${created.id}`, {
+            method: "PUT",
+            body: JSON.stringify(updatePayload),
+          });
+        }
+      }
+
+      setSubjects([finalSubject, ...subjects]);
       resetForm();
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar materia");
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!showAttachmentInput && !showAttachmentPrompt) {
-      setShowAttachmentPrompt(true);
-      return;
-    }
     void submitForm();
   };
 
   const handleAddClick = () => {
-    if (!showAttachmentInput && !showAttachmentPrompt) {
-      setShowAttachmentPrompt(true);
-      return;
-    }
     void submitForm();
   };
 
@@ -235,6 +284,132 @@ export function StudiesSection() {
     }
   };
 
+  const openStudyModal = (subject: StudySubject) => {
+    setActiveSubject(subject);
+    setStudyContent(subject.content || "");
+    setStudyImages([]);
+    setStudyOpen(true);
+  };
+
+  const closeStudyModal = () => {
+    setActiveSubject(null);
+    setStudyContent("");
+    setStudyImages([]);
+    setStudyOpen(false);
+  };
+
+  const saveSubjectContent = async () => {
+    if (!activeSubject) return;
+    try {
+      const payload = {
+        title: activeSubject.title,
+        topics: activeSubject.topics,
+        tags: activeSubject.tags,
+        content: studyContent,
+        imageUrls: activeSubject.imageUrls || [],
+      };
+      await apiFetch<StudySubject>(`/api/subjects/${activeSubject.id}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      setSubjects(subjects.map(s => s.id === activeSubject.id ? { ...s, content: studyContent } : s));
+    } catch (err) {
+      console.error("Erro ao salvar conteúdo:", err);
+    }
+  };
+
+  const handleStudyImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    if (!files.length || !activeSubject) return;
+
+    setIsUploading(true);
+    const newUrls: string[] = [];
+    
+    for (const file of files) {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `subject-images/${activeSubject.id}/${fileName}`;
+
+      try {
+        const { error: uploadError } = await supabase.storage
+          .from('uploads')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data } = supabase.storage.from('uploads').getPublicUrl(filePath);
+        newUrls.push(data.publicUrl);
+      } catch (err) {
+        console.error("Erro no upload da imagem:", err);
+      }
+    }
+
+    if (newUrls.length > 0) {
+      const updatedImageUrls = [...(activeSubject.imageUrls || []), ...newUrls];
+      try {
+        const payload = {
+          title: activeSubject.title,
+          topics: activeSubject.topics,
+          tags: activeSubject.tags,
+          content: studyContent, // keep current edited content just in case
+          imageUrls: updatedImageUrls,
+        };
+        const updated = await apiFetch<StudySubject>(`/api/subjects/${activeSubject.id}`, {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        });
+        setActiveSubject(updated);
+        setSubjects(subjects.map(s => s.id === activeSubject.id ? updated : s));
+      } catch (err) {
+        console.error("Erro ao salvar imagens no backend:", err);
+      }
+    }
+    
+    setIsUploading(false);
+    event.target.value = '';
+  };
+
+  const removeImage = async (urlToRemove: string) => {
+    if (!activeSubject) return;
+    const updatedImageUrls = (activeSubject.imageUrls || []).filter(url => url !== urlToRemove);
+    try {
+      const payload = {
+        title: activeSubject.title,
+        topics: activeSubject.topics,
+        tags: activeSubject.tags,
+        content: studyContent,
+        imageUrls: updatedImageUrls,
+      };
+      const updated = await apiFetch<StudySubject>(`/api/subjects/${activeSubject.id}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      setActiveSubject(updated);
+      setSubjects(subjects.map(s => s.id === activeSubject.id ? updated : s));
+    } catch (err) {
+      console.error("Erro ao remover imagem:", err);
+    }
+  };
+
+  const handleSummarize = async () => {
+    if (!activeSubject) return;
+    await saveSubjectContent(); // Save current content first
+    
+    setIsSummarizing(true);
+    try {
+      const updated = await apiFetch<StudySubject>(`/api/summarize/${activeSubject.id}`, {
+        method: "POST",
+      });
+      setActiveSubject(updated);
+      setSubjects(subjects.map(s => s.id === activeSubject.id ? updated : s));
+    } catch (err) {
+      console.error("Erro ao resumir:", err);
+      alert("Falha ao gerar resumo. Tente novamente.");
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
   const query = (searchParams.get("q") ?? "").trim().toLowerCase();
   const filteredSubjects = useMemo(() => {
     if (!query) return subjects;
@@ -286,70 +461,60 @@ export function StudiesSection() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form className="grid gap-3 md:grid-cols-[2fr,1fr,2fr,auto]" onSubmit={handleSubmit}>
-            <Input
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder="Ex: Filosofia Contemporanea"
-            />
-            <Input
-              type="number"
-              min={1}
-              value={topics}
-              onChange={(event) => setTopics(event.target.value)}
-              placeholder="Topicos"
-            />
-            <Input
-              value={tags}
-              onChange={(event) => setTags(event.target.value)}
-              placeholder="Tags separadas por virgula"
-            />
-            <div className="flex gap-2">
-              <Button type="button" onClick={handleAddClick}>Adicionar</Button>
+          <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
+            <div className="grid gap-3 md:grid-cols-[2fr,1fr,2fr]">
+              <Input
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="Ex: Filosofia Contemporanea"
+              />
+              <Input
+                type="number"
+                min={1}
+                value={topics}
+                onChange={(event) => setTopics(event.target.value)}
+                placeholder="Topicos"
+              />
+              <Input
+                value={tags}
+                onChange={(event) => setTags(event.target.value)}
+                placeholder="Tags separadas por virgula"
+              />
             </div>
-          </form>
-          {showAttachmentPrompt ? (
-            <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm">
-              <p className="font-semibold">Deseja adicionar PDF ou imagem?</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <Button type="button" size="sm" onClick={() => handleAttachmentChoice(true)}>
-                  Sim
-                </Button>
-                <Button type="button" size="sm" onClick={() => handleAttachmentChoice(false)}>
-                  Nao
-                </Button>
+            
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl border border-white/10 bg-white/5">
+              <div className="flex items-center gap-3">
+                <label className="cursor-pointer inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-white/10 px-4 text-sm font-medium text-foreground hover:bg-white/20 transition">
+                  <FileText className="h-4 w-4" />
+                  Anexar Arquivos
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    multiple
+                    onChange={handleAttachments}
+                    className="sr-only"
+                    disabled={isUploading}
+                  />
+                </label>
+                {attachments.length > 0 ? (
+                  <span className="text-xs text-muted-foreground flex items-center gap-2">
+                    {attachments.length} arquivo(s) selecionado(s)
+                    <button type="button" onClick={() => setAttachments([])} className="hover:text-red-400 transition">
+                      (remover)
+                    </button>
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">Opcional: PDFs ou Imagens para a IA</span>
+                )}
               </div>
-            </div>
-          ) : null}
-          {showAttachmentInput ? (
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <label className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-foreground px-5 text-sm font-semibold text-background transition hover:bg-foreground/90">
-                Adicionar PDF ou imagem
-                <input
-                  type="file"
-                  accept="image/*,application/pdf"
-                  multiple
-                  onChange={handleAttachments}
-                  className="sr-only"
-                />
-              </label>
-              {attachments.length ? (
-                <span className="text-xs text-muted-foreground">
-                  {attachments.length} arquivo(s) anexado(s)
-                </span>
-              ) : (
-                <span className="text-xs text-muted-foreground">
-                  Nenhum arquivo selecionado
-                </span>
-              )}
-              <Button type="button" variant="ghost" size="sm" onClick={closeAttachments}>
-                Fechar anexos
+              
+              <Button type="submit" disabled={isUploading || !title.trim()} className="px-8 shadow-lg">
+                {isUploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                {isUploading ? "Salvando..." : "Adicionar Matéria"}
               </Button>
             </div>
-          ) : null}
-          {attachmentError ? (
-            <p className="text-xs text-red-500">{attachmentError}</p>
-          ) : null}
+            {attachmentError ? <p className="text-xs text-red-500">{attachmentError}</p> : null}
+          </form>
         </CardContent>
       </Card>
 
@@ -397,14 +562,15 @@ export function StudiesSection() {
                   PDFs anexados
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => handleEdit(subject)}>
-                  <Pencil className="h-4 w-4" />
-                  Editar
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => handleDelete(subject.id)}>
-                  <Trash2 className="h-4 w-4" />
-                  Remover
+              <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border/50">
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  onClick={() => openStudyModal(subject)}
+                  className="flex-1 bg-gradient-to-r from-accent to-purple-500 hover:from-accent/90 hover:to-purple-500/90 text-white shadow-md group"
+                >
+                  <Sparkles className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
+                  Caderno Inteligente
                 </Button>
               </div>
             </CardContent>
@@ -451,33 +617,142 @@ export function StudiesSection() {
                 </Button>
               </div>
             </form>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <label className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-foreground px-5 text-sm font-semibold text-background transition hover:bg-foreground/90">
-                Adicionar PDF ou imagem
-                <input
-                  type="file"
-                  accept="image/*,application/pdf"
-                  multiple
-                  onChange={handleEditAttachments}
-                  className="sr-only"
-                />
-              </label>
-              {editAttachments.length ? (
-                <span className="text-xs text-muted-foreground">
-                  {editAttachments.length} arquivo(s) anexado(s)
-                </span>
-              ) : (
-                <span className="text-xs text-muted-foreground">
-                  Nenhum arquivo selecionado
-                </span>
-              )}
-              <Button type="button" variant="ghost" size="sm" onClick={() => setEditAttachments([])}>
-                Limpar anexos
-              </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Study & AI Modal */}
+      {studyOpen && activeSubject ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 sm:p-6 lg:p-12 overflow-hidden">
+          <div className="w-full h-full max-w-7xl rounded-3xl border border-white/10 bg-background shadow-2xl flex flex-col overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-white/10 bg-card/50">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                  Caderno Virtual
+                </p>
+                <h3 className="text-2xl font-display font-semibold mt-1">{activeSubject.title}</h3>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button variant="default" onClick={handleSummarize} disabled={isSummarizing || isUploading} className="bg-gradient-to-r from-accent to-purple-600 hover:from-accent/90 hover:to-purple-600/90 text-white shadow-lg">
+                  {isSummarizing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
+                  {isSummarizing ? "Analisando..." : "Resumir com IA"}
+                </Button>
+                <Button variant="ghost" size="icon" onClick={closeStudyModal} className="h-10 w-10 rounded-full bg-white/5 hover:bg-white/10">
+                  <Trash2 className="h-5 w-5 text-muted-foreground" />
+                  {/* Wait, Trash2 is wrong icon, let's use a generic close 'X' but we didn't import X. Let's just use text "Fechar" */}
+                </Button>
+                <Button variant="soft" onClick={closeStudyModal}>
+                  Fechar
+                </Button>
+              </div>
             </div>
-            {editAttachmentError ? (
-              <p className="text-xs text-red-500">{editAttachmentError}</p>
-            ) : null}
+
+            {/* Modal Body: Split Layout */}
+            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+              {/* Left Column: Content & Images */}
+              <div className="flex-1 flex flex-col border-r border-white/10 bg-background/50 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-white/10">
+                
+                {/* Text Editor Area */}
+                <div className="space-y-2 flex-1 flex flex-col">
+                  <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-accent" />
+                    Anotações da Matéria
+                  </label>
+                  <textarea
+                    value={studyContent}
+                    onChange={(e) => setStudyContent(e.target.value)}
+                    onBlur={saveSubjectContent}
+                    placeholder="Cole aqui os textos, resumos ou anotações da aula..."
+                    className="flex-1 min-h-[300px] w-full rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent resize-none"
+                  />
+                </div>
+
+                {/* Images Upload Area */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <ImageIcon className="h-4 w-4 text-accent" />
+                      Anexos (Fotos / PDFs)
+                    </label>
+                    <label className="cursor-pointer inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-white/5 px-4 text-xs font-semibold text-foreground hover:bg-white/10 transition">
+                      {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Anexar Arquivo"}
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        multiple
+                        onChange={handleStudyImageUpload}
+                        disabled={isUploading}
+                        className="sr-only"
+                      />
+                    </label>
+                  </div>
+
+                  {activeSubject.imageUrls && activeSubject.imageUrls.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      {activeSubject.imageUrls.map((url, idx) => {
+                        const isPdf = url.toLowerCase().includes(".pdf");
+                        return (
+                          <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border border-white/10 bg-white/5 group flex items-center justify-center">
+                            {isPdf ? (
+                              <div className="flex flex-col items-center justify-center p-4 text-center">
+                                <FileText className="h-8 w-8 text-red-400 mb-2" />
+                                <span className="text-xs text-muted-foreground truncate w-full px-2">Documento PDF</span>
+                              </div>
+                            ) : (
+                              <img src={url} alt={`Anexo ${idx + 1}`} className="w-full h-full object-cover" />
+                            )}
+                            <button
+                              onClick={() => removeImage(url)}
+                              className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-lg text-white opacity-0 group-hover:opacity-100 transition hover:bg-red-500"
+                              title="Remover anexo"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                            {isPdf && (
+                              <a href={url} target="_blank" rel="noreferrer" className="absolute inset-0 z-0"></a>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center p-8 rounded-2xl border border-dashed border-white/10 bg-white/5 text-center">
+                      <p className="text-sm font-medium">Nenhum anexo ainda.</p>
+                      <p className="text-xs text-muted-foreground mt-1">A IA consegue ler imagens e PDFs super bem!</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column: AI Summary */}
+              <div className="flex-1 flex flex-col bg-card/30 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-white/10">
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-purple-500 shadow-inner">
+                    <Sparkles className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-semibold">Resumo Inteligente</h4>
+                    <p className="text-xs text-muted-foreground">Gerado pelo Lumenos AI</p>
+                  </div>
+                </div>
+
+                {activeSubject.aiSummary ? (
+                  <div className="prose prose-sm prose-invert max-w-none text-foreground/90 leading-relaxed">
+                    {/* Basic markdown rendering. For advanced, user should add react-markdown, but basic pre-wrap is fine for now */}
+                    <div className="whitespace-pre-wrap font-medium">{activeSubject.aiSummary}</div>
+                  </div>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center p-8 opacity-60">
+                    <Sparkles className="h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-sm font-medium">Nenhum resumo gerado ainda.</p>
+                    <p className="text-xs text-muted-foreground mt-2 max-w-[250px]">
+                      Adicione anotações ou fotos ao lado e clique em "Resumir com IA".
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       ) : null}

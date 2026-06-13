@@ -63,7 +63,7 @@ export function AITutor() {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed bottom-6 right-6 z-50"
+            className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 z-50"
           >
             <Button
               onClick={() => setIsOpen(true)}
@@ -82,7 +82,7 @@ export function AITutor() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.95 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-6 right-6 z-50 w-[350px] sm:w-[400px] h-[500px] max-h-[80vh] flex flex-col overflow-hidden rounded-2xl border border-white/20 bg-glass shadow-2xl backdrop-blur-xl"
+            className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 z-50 w-[350px] sm:w-[400px] h-[500px] max-h-[80vh] flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card/80 shadow-2xl backdrop-blur-2xl"
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-white/10 bg-white/5 p-4">

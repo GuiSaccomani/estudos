@@ -138,65 +138,91 @@ export function DashboardSection() {
       >
         {displayStats.map((stat, index) => (
           <motion.div key={stat?.label ?? `stat-${index}`} variants={item}>
-            <Card className="backdrop-blur-md bg-white/5 border-white/10 hover:border-white/20 transition-all duration-300">
-              <CardHeader>
+            <Card className="group relative overflow-hidden backdrop-blur-xl bg-card/40 border-border/40 hover:border-border/80 transition-all duration-300 shadow-sm hover:shadow-md">
+              <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <CardHeader className="pb-2">
                 {isLoading ? (
-                  <Skeleton className="h-4 w-28 bg-white/10" />
+                  <Skeleton className="h-3 w-24 bg-muted" />
                 ) : (
-                  <CardDescription>{stat!.label}</CardDescription>
+                  <CardDescription className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">{stat!.label}</CardDescription>
                 )}
                 {isLoading ? (
-                  <Skeleton className="mt-3 h-7 w-24 bg-white/10" />
+                  <Skeleton className="mt-3 h-8 w-20 bg-muted" />
                 ) : (
-                  <CardTitle className="text-2xl">{stat!.value}</CardTitle>
+                  <CardTitle className="text-3xl font-display font-medium tracking-tight mt-1">{stat!.value}</CardTitle>
                 )}
               </CardHeader>
-              <CardContent className="text-xs text-muted-foreground">
-                {isLoading ? <Skeleton className="h-3 w-24 bg-white/10" /> : stat!.detail}
+              <CardContent className="text-xs text-muted-foreground pt-0">
+                {isLoading ? <Skeleton className="h-3 w-32 bg-muted" /> : stat!.detail}
               </CardContent>
             </Card>
           </motion.div>
         ))}
       </motion.div>
 
-      <Card className="overflow-hidden backdrop-blur-md bg-white/5 border-white/10 hover:border-white/20 transition-all duration-300">
-        <CardHeader>
-          <CardTitle>Ritmo semanal</CardTitle>
-          <CardDescription>Horas de estudo nos últimos 7 dias.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="grid grid-cols-7 items-end gap-3">
-              {Array.from({ length: 7 }).map((_, index) => (
-                <div key={`day-skel-${index}`} className="space-y-2">
-                  <Skeleton className="h-24 w-full rounded-full" />
-                  <Skeleton className="mx-auto h-3 w-6" />
-                </div>
-              ))}
-            </div>
-          ) : hasWeekly ? (
-            <div className="grid grid-cols-7 items-end gap-3">
-              {weekly.map((value, index) => (
-                <div key={`day-${index}`} className="space-y-2">
-                  <div className="h-24 rounded-full bg-white/5">
-                    <div
-                      className="h-full w-full rounded-full bg-gradient-to-t from-accent to-transparent"
-                      style={{ height: `${Math.min(100, Math.max(0, value))}%` }}
-                    />
+      <div className="grid gap-6 md:grid-cols-3">
+        {/* Gráfico de Consistência (Heatmap Style) */}
+        <Card className="md:col-span-2 overflow-hidden backdrop-blur-xl bg-card/40 border-border/40 shadow-sm transition-all duration-300 hover:border-border/80">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-display tracking-tight flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-accent" />
+              Ritmo Semanal
+            </CardTitle>
+            <CardDescription>Horas de estudo nos últimos 7 dias.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex items-end justify-between h-32 gap-2">
+                {Array.from({ length: 7 }).map((_, index) => (
+                  <div key={`day-skel-${index}`} className="flex-1 flex flex-col items-center gap-2">
+                    <div className="w-full rounded-md bg-muted animate-pulse" style={{ height: `${Math.random() * 80 + 20}%` }} />
+                    <Skeleton className="h-3 w-6" />
                   </div>
-                  <p className="text-center text-xs text-muted-foreground">
-                    {index + 1}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Sem sessoes recentes. Inicie um pomodoro para ver o ritmo semanal.
+                ))}
+              </div>
+            ) : hasWeekly ? (
+              <div className="flex items-end justify-between h-32 gap-2">
+                {weekly.map((value, index) => (
+                  <div key={`day-${index}`} className="flex-1 flex flex-col items-center gap-2 group">
+                    <div className="w-full relative flex-1 flex items-end justify-center bg-card border border-border/30 rounded-lg overflow-hidden group-hover:border-border/60 transition-colors">
+                      <div
+                        className="w-full bg-accent/80 hover:bg-accent transition-colors duration-500 rounded-b-md"
+                        style={{ height: `${Math.min(100, Math.max(5, value))}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase">
+                      {["D", "S", "T", "Q", "Q", "S", "S"][index]}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="h-32 flex flex-col items-center justify-center text-center p-4 border border-dashed border-border/50 rounded-xl bg-card/20">
+                <p className="text-sm text-muted-foreground">Sem sessões recentes.</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">Inicie um pomodoro para gerar dados.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Widget de Sabedoria do Dia */}
+        <Card className="relative overflow-hidden backdrop-blur-xl bg-card/40 border-border/40 shadow-sm transition-all duration-300 hover:border-border/80 group">
+          <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-accent/5 blur-[40px] pointer-events-none group-hover:bg-accent/10 transition-colors duration-700" />
+          <CardHeader className="pb-2 relative z-10">
+            <CardDescription className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+              Sabedoria Diária
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="relative z-10 flex flex-col justify-center h-[calc(100%-3rem)]">
+            <blockquote className="text-lg font-display leading-tight text-foreground/90 italic">
+              "A educação não é o aprendizado de fatos, mas o treinamento da mente para pensar."
+            </blockquote>
+            <p className="text-xs text-muted-foreground font-medium mt-4 text-right">
+              — Albert Einstein
             </p>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </section>
   );
 }
