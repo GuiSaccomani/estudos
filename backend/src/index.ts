@@ -9,6 +9,7 @@ import { calendarRouter } from "./routes/calendar.js";
 import { philosophyRouter } from "./routes/philosophy.js";
 import { reflectionsRouter } from "./routes/reflections.js";
 import { pomodoroRouter } from "./routes/pomodoro.js";
+import { chatRouter } from "./routes/chat.js";
 
 const app = express();
 // Use a safe fallback when PORT is empty or not set.
@@ -33,6 +34,7 @@ app.use("/api/calendar", calendarRouter);
 app.use("/api/philosophy", philosophyRouter);
 app.use("/api/reflections", reflectionsRouter);
 app.use("/api/pomodoro", pomodoroRouter);
+app.use("/api/chat", chatRouter);
 
 app.listen(port, () => {
   console.log(`API running on port ${port}`);

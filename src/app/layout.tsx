@@ -22,6 +22,8 @@ export const metadata: Metadata = {
     "Plataforma pessoal de estudos focada em produtividade, revisao ativa e filosofia viva.",
 };
 
+import { AITutor } from "@/components/ui/ai-tutor";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -37,6 +39,7 @@ export default function RootLayout({
         <Providers>
           <Suspense fallback={<div className="min-h-screen" />}>
             <Shell>{children}</Shell>
+            <AITutor />
           </Suspense>
         </Providers>
       </body>

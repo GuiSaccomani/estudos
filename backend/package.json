@@ -12,11 +12,12 @@
     "prisma:deploy": "prisma migrate deploy"
   },
   "dependencies": {
+    "@google/genai": "^2.8.0",
+    "@prisma/client": "^6.16.1",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^5.1.0",
-    "zod": "^4.1.5",
-    "@prisma/client": "^6.16.1"
+    "zod": "^4.1.5"
   },
   "devDependencies": {
     "@types/cors": "^2.8.18",
