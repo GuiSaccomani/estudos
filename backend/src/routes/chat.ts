@@ -14,11 +14,11 @@ router.post("/", async (req, res) => {
 
     // Fetch user context from the database
     const subjects = await prisma.subject.findMany({ select: { title: true } });
-    const goals = await prisma.goal.findMany({ select: { title: true, progress: true } });
+    const goals = await prisma.goal.findMany({ select: { label: true, progress: true } });
     const reflections = await prisma.reflection.findMany({ select: { title: true } });
 
     const subjectsList = subjects.map(s => s.title).join(", ") || "Nenhuma matéria cadastrada";
-    const goalsList = goals.map(g => `${g.title} (${g.progress}%)`).join(", ") || "Nenhuma meta";
+    const goalsList = goals.map(g => `${g.label} (${g.progress}%)`).join(", ") || "Nenhuma meta";
     const reflectionsList = reflections.map(r => r.title).join(", ") || "Nenhuma reflexão";
 
     const systemInstruction = `Você é o Lumenos AI, um tutor de filosofia, produtividade e estudos.
