@@ -24,8 +24,16 @@ app.use(
 );
 app.use(express.json());
 
-app.get("/health", (_req, res) => {
-  res.json({ ok: true });
+import { prisma } from "./prisma.js";
+
+app.get("/health", async (_req, res) => {
+  try {
+    // Ping no banco de dados para evitar congelamento do Supabase
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ ok: true, message: "Database and Server are awake!" });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: "Database connection failed" });
+  }
 });
 
 import { requireAuth } from "./middleware/auth.js";
